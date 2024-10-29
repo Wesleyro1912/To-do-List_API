@@ -86,7 +86,7 @@ class Task extends BaseController{
 
             
             // Prepara os dados para inserção em um array
-            $data = [
+            $taks = [
                 'title' => $title,
                 'description' => $description,
                 'checked' => $checked,
@@ -95,12 +95,13 @@ class Task extends BaseController{
             
             try {
                 // Cadastrar a tarefa
-                $this->taskModel->insert($data);
+                $data = $this->taskModel->insert($taks);
     
                 // Retorna uma resposta JSON com as tarefas em caso de sucesso
                 return $this->response->setStatusCode(201)->setJSON([
                     'status' => 'success',
-                    'message' => 'Tarefa cadastrada com sucesso.'
+                    'message' => 'Tarefa cadastrada com sucesso.',
+                    'data' => $data
                 ]);
                 
             } catch (DatabaseException $e) {
@@ -168,6 +169,7 @@ class Task extends BaseController{
         }
     }
     
+    
     // === Edição de uma tarefa ===
     public function update($id){
         // Verificar o método da requisição
@@ -183,7 +185,7 @@ class Task extends BaseController{
 
             
             // Prepara os dados para inserção em um array
-            $data = [
+            $taks = [
                 'title' => $title,
                 'description' => $description,
                 'checked' => $checked,
@@ -192,12 +194,13 @@ class Task extends BaseController{
             
             try {
                 // Cadastrar a tarefa
-                $this->taskModel->update($id, $data);
+                $data = $this->taskModel->update($id, $taks);
     
                 // Retorna uma resposta JSON com as tarefas em caso de sucesso
                 return $this->response->setStatusCode(201)->setJSON([
                     'status' => 'success',
-                    'message' => 'Tarefa cadastrada com sucesso.'
+                    'message' => 'Tarefa cadastrada com sucesso.',
+                    'data' => $data,
                 ]);
                 
             } catch (DatabaseException $e) {
@@ -226,36 +229,67 @@ class Task extends BaseController{
         }  
     }
 
-    // === Delete de uma tarefa ===
-    public function delete($id){
-        try {
-            // Busca de todas as tarefas
-            $data = $this->taskModel->select('title, description, checked')->findAll();
+    
+    // // === Delete de uma tarefa ===
+    // public function delete($id){
+    //     try {
+    //         // Busca de todas as tarefas
+    //         $data = $this->taskModel->select('title, description, checked')->findAll();
 
-            // Retorna uma resposta JSON com as tarefas em caso de sucesso
+    //         // Retorna uma resposta JSON com as tarefas em caso de sucesso
+    //         return $this->response->setStatusCode(200)->setJSON([
+    //             'status' => 'success',
+    //             'data' => $data,
+    //         ]);
+            
+    //     } catch (DatabaseException $e) {
+    //         // Captura erros específicos do banco de dados e salva no log
+    //         log_message('error', 'Erro no banco de dados: ' . $e->getMessage());
+    //         return $this->response->setStatusCode(500)->setJSON([
+    //             'status' => 'error',
+    //             'message' => 'Erro no banco de dados.'
+    //         ]);
+            
+    //     } catch (\Exception $e) {
+    //         // Captura quaisquer outros erros e salva no log
+    //         log_message('error', 'Erro inesperado: ' . $e->getMessage());
+    //         return $this->response->setStatusCode(500)->setJSON([
+    //             'status' => 'error',
+    //             'message' => 'Erro inesperado.'
+    //         ]);
+    //     }
+    // }
+
+    public function delete($id) {
+    try {
+        // Verifica se o ID existe no banco de dados
+        if ($this->taskModel->find($id)) {
+            // Executa a exclusão do registro com o ID especificado
+            $this->taskModel->delete($id);
+
+            // Retorna uma resposta de sucesso
             return $this->response->setStatusCode(200)->setJSON([
                 'status' => 'success',
-                'data' => $data,
+                'message' => 'Tarefa excluída com sucesso.'
             ]);
-            
-        } catch (DatabaseException $e) {
-            // Captura erros específicos do banco de dados e salva no log
-            log_message('error', 'Erro no banco de dados: ' . $e->getMessage());
-            return $this->response->setStatusCode(500)->setJSON([
+        } else {
+            // Retorna uma resposta caso o ID não exista
+            return $this->response->setStatusCode(404)->setJSON([
                 'status' => 'error',
-                'message' => 'Erro no banco de dados.'
-            ]);
-            
-        } catch (\Exception $e) {
-            // Captura quaisquer outros erros e salva no log
-            log_message('error', 'Erro inesperado: ' . $e->getMessage());
-            return $this->response->setStatusCode(500)->setJSON([
-                'status' => 'error',
-                'message' => 'Erro inesperado.'
+                'message' => 'Tarefa não encontrada.'
             ]);
         }
+    } catch (DatabaseException $e) {
+        // Captura erros do banco de dados
+        log_message('error', 'Erro ao excluir tarefa: ' . $e->getMessage());
+        return $this->response->setStatusCode(500)->setJSON([
+            'status' => 'error',
+            'message' => 'Erro ao excluir tarefa do banco de dados.'
+        ]);
     }
+}
 
+    
     // === Atualização do status de uma tarefa ===
     public function status($status){
         try {
