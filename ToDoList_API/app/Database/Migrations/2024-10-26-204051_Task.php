@@ -18,11 +18,12 @@ class Task extends Migration
             ],
             'title' => [
                 'type'       => 'VARCHAR',
-                'constraint' => '100',
+                'constraint' => '50',
                 'null' => false,
             ],
             'description' => [
                 'type' => 'TEXT',
+                'constraint' => '150',
                 'null' => true,
             ],
             'checked' => [
