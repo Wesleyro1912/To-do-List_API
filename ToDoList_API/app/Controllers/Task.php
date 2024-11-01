@@ -155,17 +155,18 @@ class Task extends BaseController{
 
     // === Retorno de uma tarefa de acordo com o id para fazer o update/edição ===
     public function edit($id){
+        
         // Verificar o método da requisição
         if ($this->request->getMethod() === 'get') {
             
-            // Verificar se o id é válido
-            if (!is_numeric($id) || (int)$id <= 0) {
+            // Verificar se o ID é válido
+            if (!isValidId($id)){
                 return $this->response->setStatusCode(400)->setJSON([
                     'status' => 'error',
                     'message' => 'ID inválido fornecido.'
                 ]);
                 
-            } else {
+            }else {
                 
                 // Verifica se a tarefa existe
                 if(!empty($this->taskModel->find($id))){
@@ -218,15 +219,17 @@ class Task extends BaseController{
     
     // === Edição de uma tarefa ===
     public function update($id){
+        
         // Verificar o método da requisição
         if ($this->request->getMethod() === 'put') {
             
-            // Verificar se o id é válido
-            if (!is_numeric($id) || (int)$id <= 0) {
+            // Verificar se o ID é válido
+            if (!isValidId($id)) {
                 return $this->response->setStatusCode(400)->setJSON([
                     'status' => 'error',
-                    'message' => 'ID inválido fornecido: '.$id,
+                    'message' => 'ID inválido fornecido.'
                 ]);
+                
             } else {
                 
                 // Verifica se a tarefa existe
@@ -241,7 +244,7 @@ class Task extends BaseController{
                     $updated_at = $update->format('Y-m-d H:i:s');
 
                     // Prepara os dados para inserção em um array
-                    $taks = [
+                    $task = [
                         'title' => $title,
                         'description' => $description,
                         'checked' => $checked,
@@ -261,7 +264,7 @@ class Task extends BaseController{
                     } else {
                         try {
                         // Atulização da tarefa com base no id
-                        $data = $this->taskModel->update($id, $taks);
+                        $data = $this->taskModel->update($id, $task);
             
                         // Retorna uma resposta JSON com as tarefas em caso de sucesso
                         return $this->response->setStatusCode(200)->setJSON([
@@ -309,11 +312,12 @@ class Task extends BaseController{
     
     // === Delete de uma Tarefa ===
     public function delete($id) {
+        
         // Verificar o método da requisição
         if ($this->request->getMethod() === 'delete') {
             
             // Verificar se o ID é válido
-            if (!is_numeric($id) || (int)$id <= 0) {
+            if (!isValidId($id)) {
                 return $this->response->setStatusCode(400)->setJSON([
                     'status' => 'error',
                     'message' => 'ID inválido fornecido.'
@@ -373,31 +377,41 @@ class Task extends BaseController{
     }
 
     
+    // === Altera o estado do campo checked ===
     public function status($status){
-        try {
-            // Busca de todas as tarefas
-            $data = $this->taskModel->select('title, description, checked')->findAll();
+        // Verificar o método da requisição
+        if ($this->request->getMethod() === 'patch') {
+            try {
+                // Busca de todas as tarefas
+                $data = $this->taskModel->select('title, description, checked')->findAll();
 
-            // Retorna uma resposta JSON com as tarefas em caso de sucesso
-            return $this->response->setStatusCode(200)->setJSON([
-                'status' => 'success',
-                'data' => $data,
-            ]);
-            
-        } catch (DatabaseException $e) {
-            // Captura erros específicos do banco de dados e salva no log
-            log_message('error', 'Erro no banco de dados: ' . $e->getMessage());
-            return $this->response->setStatusCode(500)->setJSON([
+                // Retorna uma resposta JSON com as tarefas em caso de sucesso
+                return $this->response->setStatusCode(200)->setJSON([
+                    'status' => 'success',
+                    'data' => $data,
+                ]);
+                
+            } catch (DatabaseException $e) {
+                // Captura erros específicos do banco de dados e salva no log
+                log_message('error', 'Erro no banco de dados: ' . $e->getMessage());
+                return $this->response->setStatusCode(500)->setJSON([
+                    'status' => 'error',
+                    'message' => 'Erro no banco de dados.'
+                ]);
+                
+            } catch (\Exception $e) {
+                // Captura quaisquer outros erros e salva no log
+                log_message('error', 'Erro inesperado: ' . $e->getMessage());
+                return $this->response->setStatusCode(500)->setJSON([
+                    'status' => 'error',
+                    'message' => 'Erro inesperado.'
+                ]);
+            }
+        } else {
+            // Método não permitido
+            return $this->response->setStatusCode(405)->setJSON([
                 'status' => 'error',
-                'message' => 'Erro no banco de dados.'
-            ]);
-            
-        } catch (\Exception $e) {
-            // Captura quaisquer outros erros e salva no log
-            log_message('error', 'Erro inesperado: ' . $e->getMessage());
-            return $this->response->setStatusCode(500)->setJSON([
-                'status' => 'error',
-                'message' => 'Erro inesperado.'
+                'message' => 'Método não permitido. Utilize PATCH para deleta a tarefa.'
             ]);
         }
     }

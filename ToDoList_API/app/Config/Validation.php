@@ -40,8 +40,9 @@ class Validation extends BaseConfig{
     // Regras de validação da API
     public static function rules(){
         return [
-            'title' => 'required|max_length[50]',
+            'title' => 'required|max_length[50]|is_unique[tasks.title]',
             'description' => 'max_length[150]',
+            'checked' => 'required|in_list[0,1]',
         ];
     }
 
@@ -51,9 +52,14 @@ class Validation extends BaseConfig{
             'title' => [
                 'required' => 'O campo Título é obrigatório.',
                 'max_length' => 'O Título pode ter no máximo 50 caracteres.',
+                'is_unique' => 'Já existe um dado com esse nome. Escolha um título único.',
             ],
             'description' => [
                 'max_length' => 'A Descrição pode ter no máximo 150 caracteres.',
+            ],
+            'checked' => [
+                'required' => 'O campo Checked é obrigatório.',
+                'in_list' => 'O campo Checked só aceita valores 0 ou 1.',
             ],
         ];
     }
