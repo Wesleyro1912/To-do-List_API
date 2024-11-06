@@ -27,7 +27,7 @@ class Task extends BaseController{
     // === Retorno de todas as tarefas do banco de dados ===
     public function index() {
         // Verificar o método da requisição
-        if ($this->request->getMethod() === 'get') {
+        if ($this->request->getMethod() === 'GET') {
             try {
                 // Busca de todas as tarefas
                 $data = $this->taskModel->select('title, description, checked')->findAll();
@@ -42,7 +42,7 @@ class Task extends BaseController{
                 } else {
                     // Verifica se há tarefas com campos nulos ou vazios
                     foreach ($data as $task) {
-                        if (is_null_or_empty($task['title']) || is_null_or_empty($task['checked'])) {
+                        if (is_null_or_empty($task->title) || is_null_or_empty($task->checked)) {
                             return $this->response->setStatusCode(400)->setJSON([
                                 'status' => 'error',
                                 'message' => 'Uma ou mais tarefas possuem valores nulos ou vazios.'
@@ -73,6 +73,7 @@ class Task extends BaseController{
                     'message' => 'Ocorreu um erro inesperado.'
                 ]);
             }
+            
         } else {
             // Método não permitido
             return $this->response->setStatusCode(405)->setJSON([
@@ -86,12 +87,12 @@ class Task extends BaseController{
     // === Cadastro das tarefas ===
     public function store(){
         // Verificar o método da requisição
-        if ($this->request->getMethod() === 'post') {
+        if ($this->request->getMethod() === 'POST') {
             
             // Obtem os dados da requisição 
-            $title = $this->request->getPost('title');
-            $description = $this->request->getPost('description');
-            $checked = false;
+            $title = $this->request->getJSON()->title;
+            $description = $this->request->getJSON()->description;
+            $checked = $this->request->getJSON()->checked;
             $created = new DateTime();
             $created_at = $created->format('Y-m-d H:i:s');
 
@@ -105,14 +106,15 @@ class Task extends BaseController{
 
             // Verificação da validação
             if (!$this->validate(Validation::rules(), Validation::messages())) {
-                $erros = $this->validator->listErrors();
-                log_message('error', 'Erro, falha na validação do CADASTRO de TAREFA no banco de dados: ' . $erros);
+                // Log da falha de validação
+                log_message('error', 'Erro na validação do CADASTRO de TAREFA: ' . implode(', ', $this->validator->getErrors()));
+                
+                // Resposta simplificada
                 return $this->response->setStatusCode(400)->setJSON([
                     'status' => 'error',
                     'message' => 'Validação inválida',
-                    'erros' => $erros
+                    'errors' => $this->validator->getErrors(),
                 ]);
-                
             } else {
                 try {
                     // Cadastrar a tarefa
@@ -126,16 +128,15 @@ class Task extends BaseController{
                     ]);
                     
                 } catch (DatabaseException $e) {
-                    // Captura erros específicos do banco de dados e salva no log
-                    log_message('error', 'Erro de CADASTRO de TAREFA no banco de dados: ' . $e->getMessage());
+                    // Erro de banco de dados
+                    log_message('error', 'Erro no CADASTRO DE TAREFAS: ' . $e->getMessage());
                     return $this->response->setStatusCode(500)->setJSON([
                         'status' => 'error',
                         'message' => 'Não foi possível cadastrar a tarefa.'
                     ]);
-                    
                 } catch (\Exception $e) {
-                    // Captura quaisquer outros erros e salva no log
-                    log_message('error', 'Erro inesperado de CADASTRO de TAREFA: ' . $e->getMessage());
+                    // Erro genérico
+                    log_message('error', 'Erro inesperado: ' . $e->getMessage());
                     return $this->response->setStatusCode(500)->setJSON([
                         'status' => 'error',
                         'message' => 'Erro inesperado.'
@@ -157,7 +158,7 @@ class Task extends BaseController{
     public function edit($id){
         
         // Verificar o método da requisição
-        if ($this->request->getMethod() === 'get') {
+        if ($this->request->getMethod() === 'GET') {
             
             // Verificar se o ID é válido
             if (!isValidId($id)){
@@ -218,10 +219,103 @@ class Task extends BaseController{
     
     
     // === Edição de uma tarefa ===
-    public function update($id){
+    // public function update($id){
         
+    //     // Verificar o método da requisição
+    //     if ($this->request->getMethod() === 'PUT') {
+            
+    //         // Verificar se o ID é válido
+    //         if (!isValidId($id)) {
+    //             return $this->response->setStatusCode(400)->setJSON([
+    //                 'status' => 'error',
+    //                 'message' => 'ID inválido fornecido.'
+    //             ]);
+                
+    //         } else {
+                
+    //             // Verifica se a tarefa existe
+    //             if(!empty($this->taskModel->find($id))){
+                    
+    //                 // Obtem os dados da requisição PUT
+    //                 $input = $this->request->getRawInput();
+
+    //                 // Acessa diretamente os valores do array
+    //                 $title = $input['title'] ?? null;   
+    //                 $description = $input['description'] ?? null;
+    //                 $checked = $input['checked'] ?? null;
+    //                 $update = new DateTime();
+    //                 $updated_at = $update->format('Y-m-d H:i:s');
+
+    //                 // Prepara os dados para inserção em um array
+    //                 $task = [
+    //                     'title' => $title,
+    //                     'description' => $description,
+    //                     'checked' => $checked,
+    //                     'updated_at' => $updated_at,
+    //                 ];
+                    
+    //                 // Verificação da validação
+    //                 if (!$this->validate(Validation::rules(), Validation::messages())) {
+    //                     // Log da falha de validação
+    //                     log_message('error', 'Erro na validação do CADASTRO de TAREFA: ' . implode(', ', $this->validator->getErrors()));
+                        
+    //                     // Resposta simplificada
+    //                     return $this->response->setStatusCode(400)->setJSON([
+    //                         'status' => 'error',
+    //                         'message' => 'Validação inválida',
+    //                         'errors' => $this->validator->getErrors(),
+    //                     ]);
+    //                 } else {
+    //                     try {
+    //                     // Atulização da tarefa com base no id
+    //                     $data = $this->taskModel->update($id, $task);
+            
+    //                     // Retorna uma resposta JSON com as tarefas em caso de sucesso
+    //                     return $this->response->setStatusCode(200)->setJSON([
+    //                         'status' => 'success',
+    //                         'message' => 'Tarefa atualizada com sucesso.',
+    //                         'data' => $data,
+    //                     ]);
+                        
+    //                     } catch (DatabaseException $e) {
+    //                         // Captura erros específicos do banco de dados e salva no log
+    //                         log_message('error', 'Erro de CADASTRO de TARREFA banco de dados: ' . $e->getMessage());
+    //                         return $this->response->setStatusCode(500)->setJSON([
+    //                             'status' => 'error',
+    //                             'message' => 'Não foi possível cadastrar a tarefa.'
+    //                         ]);
+                            
+    //                     } catch (\Exception $e) {
+    //                         // Captura quaisquer outros erros e salva no log
+    //                         log_message('error', 'Erro inesperado de CADASTRO de TARREFA: ' . $e->getMessage());
+    //                         return $this->response->setStatusCode(500)->setJSON([
+    //                             'status' => 'error',
+    //                             'message' => 'Erro inesperado.'
+    //                         ]);
+    //                     }
+    //                 }
+    //             } else {
+    //                 // Captura erros específicos do banco de dados e salva no log
+    //                 log_message('error', 'Erro no banco de dados, tarefa não encontrada com o id: ' . $id);
+    //                 return $this->response->setStatusCode(404)->setJSON([
+    //                     'status' => 'error',
+    //                     'message' => 'Tarefa não encontrada'
+    //                 ]);
+                    
+    //             }  
+    //         }
+    //     // Método não permitido
+    //     }else{
+    //         return $this->response->setStatusCode(405)->setJSON([
+    //             'status' => 'error',
+    //             'message' => 'Método não permitido. Utilize `PUT` para cadastrar.'
+    //         ]);
+    //     }  
+    // }
+
+    public function update($id) {
         // Verificar o método da requisição
-        if ($this->request->getMethod() === 'put') {
+        if ($this->request->getMethod() === 'PUT') {
             
             // Verificar se o ID é válido
             if (!isValidId($id)) {
@@ -229,11 +323,10 @@ class Task extends BaseController{
                     'status' => 'error',
                     'message' => 'ID inválido fornecido.'
                 ]);
-                
             } else {
                 
                 // Verifica se a tarefa existe
-                if(!empty($this->taskModel->find($id))){
+                if (!empty($this->taskModel->find($id))) {
                     
                     // Obtem os dados da requisição PUT
                     $input = $this->request->getRawInput();
@@ -242,7 +335,7 @@ class Task extends BaseController{
                     $checked = $input['checked'] ?? null;
                     $update = new DateTime();
                     $updated_at = $update->format('Y-m-d H:i:s');
-
+        
                     // Prepara os dados para inserção em um array
                     $task = [
                         'title' => $title,
@@ -253,37 +346,37 @@ class Task extends BaseController{
                     
                     // Verificação da validação
                     if (!$this->validate(Validation::rules(), Validation::messages())) {
-                        $erros = $this->validator->listErrors();
-                        log_message('error', 'Erro, falha na validação do CADASTRO de TAREFA no banco de dados: ' . $erros);
+                        // Log da falha de validação
+                        log_message('error', 'Erro na validação do CADASTRO de TAREFA: ' . implode(', ', $this->validator->getErrors()));
+                        
+                        // Resposta simplificada
                         return $this->response->setStatusCode(400)->setJSON([
                             'status' => 'error',
                             'message' => 'Validação inválida',
-                            'erros' => $erros
+                            'errors' => $this->validator->getErrors(),
                         ]);
-                        
                     } else {
                         try {
-                        // Atulização da tarefa com base no id
-                        $data = $this->taskModel->update($id, $task);
-            
-                        // Retorna uma resposta JSON com as tarefas em caso de sucesso
-                        return $this->response->setStatusCode(200)->setJSON([
-                            'status' => 'success',
-                            'message' => 'Tarefa atualizada com sucesso.',
-                            'data' => $data,
-                        ]);
-                        
+                            // Atualização da tarefa com base no id
+                            $data = $this->taskModel->update($id, $task);
+                
+                            // Retorna uma resposta JSON com as tarefas em caso de sucesso
+                            return $this->response->setStatusCode(200)->setJSON([
+                                'status' => 'success',
+                                'message' => 'Tarefa atualizada com sucesso.',
+                                'data' => $data,
+                            ]);
+                            
                         } catch (DatabaseException $e) {
                             // Captura erros específicos do banco de dados e salva no log
-                            log_message('error', 'Erro de CADASTRO de TARREFA banco de dados: ' . $e->getMessage());
+                            log_message('error', 'Erro de CADASTRO de TAREFA banco de dados: ' . $e->getMessage());
                             return $this->response->setStatusCode(500)->setJSON([
                                 'status' => 'error',
                                 'message' => 'Não foi possível cadastrar a tarefa.'
                             ]);
-                            
                         } catch (\Exception $e) {
                             // Captura quaisquer outros erros e salva no log
-                            log_message('error', 'Erro inesperado de CADASTRO de TARREFA: ' . $e->getMessage());
+                            log_message('error', 'Erro inesperado de CADASTRO de TAREFA: ' . $e->getMessage());
                             return $this->response->setStatusCode(500)->setJSON([
                                 'status' => 'error',
                                 'message' => 'Erro inesperado.'
@@ -291,23 +384,23 @@ class Task extends BaseController{
                         }
                     }
                 } else {
-                    // Captura erros específicos do banco de dados e salva no log
+                    // Tarefa não encontrada
                     log_message('error', 'Erro no banco de dados, tarefa não encontrada com o id: ' . $id);
                     return $this->response->setStatusCode(404)->setJSON([
                         'status' => 'error',
                         'message' => 'Tarefa não encontrada'
                     ]);
-                    
-                }  
+                }
             }
         // Método não permitido
-        }else{
+        } else {
             return $this->response->setStatusCode(405)->setJSON([
                 'status' => 'error',
                 'message' => 'Método não permitido. Utilize `PUT` para cadastrar.'
             ]);
-        }  
+        }
     }
+    
 
     
     // === Delete de uma Tarefa ===
