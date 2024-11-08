@@ -38,7 +38,7 @@ class Validation extends BaseConfig{
     ];
 
     // Regras de validação da API
-    public static function rules(){
+    public static function rulesStore(){
         return [
             'title' => 'required|max_length[50]|is_unique[tasks.title]',
             'description' => 'max_length[150]',
@@ -47,7 +47,7 @@ class Validation extends BaseConfig{
     }
 
     // Mensagens de validação da API
-    public static function messages(){
+    public static function messagesStore(){
         return [
             'title' => [
                 'required' => 'O campo Título é obrigatório.',
@@ -63,6 +63,33 @@ class Validation extends BaseConfig{
             ],
         ];
     }
+
+    // Regras de validação da API
+    public static function rulesUpdate(){
+        return [
+            'title' => 'required|max_length[50]',
+            'description' => 'max_length[150]',
+            'checked' => 'required|in_list[0,1]',
+        ];
+    }
+
+    // Mensagens de validação da API
+    public static function messagesUpdate(){
+        return [
+            'title' => [
+                'required' => 'O campo Título é obrigatório.',
+                'max_length' => 'O Título pode ter no máximo 50 caracteres.',
+            ],
+            'description' => [
+                'max_length' => 'A Descrição pode ter no máximo 150 caracteres.',
+            ],
+            'checked' => [
+                'required' => 'O campo Checked é obrigatório.',
+                'in_list' => 'O campo Checked só aceita valores 0 ou 1.',
+            ],
+        ];
+    }
+    
 
     // --------------------------------------------------------------------
     // Rules

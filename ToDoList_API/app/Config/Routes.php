@@ -14,5 +14,5 @@ $routes->group('task', static function ($routes) {
     $routes->get('edit/(:num)', 'Task::edit/$1/', ['as' => 'task.edit']);
     $routes->put('update/(:num)', 'Task::update/$1', ['as' => 'task.update']);
     $routes->delete('delete/(:num)', 'Task::delete/$1', ['as' => 'task.delete']);
-    $routes->patch('status/(:any)', 'Task::status/$1', ['as' => 'task.status']);
+    $routes->patch('status/(:num)', 'Task::status/$1', ['as' => 'task.status']);
 });
