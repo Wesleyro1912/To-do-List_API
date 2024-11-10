@@ -233,12 +233,7 @@ class Task extends BaseController{
                 
                 // Verifica se a tarefa existe
                 if (!empty($this->taskModel->find($id))) {
-                    
-                    // Obtem os dados da requisição PUT
-                    // $input = $this->request->getRawInput();
-                    // $title = $input['title'] ?? null;
-                    // $description = $input['description'] ?? null;
-                    // $checked = $input['checked'] ?? null;
+                
                     $title = $this->request->getJSON()->title;
                     $description = $this->request->getJSON()->description;
                     $checked = $this->request->getJSON()->checked;
@@ -378,7 +373,7 @@ class Task extends BaseController{
     }
 
         
-    // === Altera o estado do campo checked ===
+    // === Altera o estado do campo checked === 
     public function status($id){
         
         // Verificar o método da requisição
